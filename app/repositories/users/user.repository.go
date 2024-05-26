@@ -10,6 +10,7 @@ type UserRepository interface {
 	FindUser(userId uint) (models.User, error)
 	FindUserByEmail(email string) (models.User, error)
 	FindUserById(id uint) (models.User, error)
+	FindUserByIdAndGroup(id, group uint) (models.User, error)
 }
 
 type userRepository struct {

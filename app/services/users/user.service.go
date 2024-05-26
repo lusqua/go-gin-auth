@@ -9,7 +9,7 @@ import (
 type UserService interface {
 	CreateUser(body dto.CreateUserDto, userRepo repository.UserRepository) (gin.H, error)
 	GetUsers()
-	FindUser()
+	FindUser(userId, groupId uint, userRepo repository.UserRepository) (gin.H, error)
 	UpdateUser()
 	DeleteUser()
 }
