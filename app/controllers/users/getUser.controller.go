@@ -1,6 +1,5 @@
 package users
 
-import "C"
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/lusqua/gin-auth/app/config/database"
@@ -9,9 +8,7 @@ import (
 	"strconv"
 )
 
-func FindUser(c *gin.Context) {
-
-	id := c.Param("userId")
+func GetUser(c *gin.Context) {
 	groupId := c.Query("groupId")
 
 	if groupId == "" {
@@ -22,12 +19,6 @@ func FindUser(c *gin.Context) {
 		)
 	}
 
-	uintId, err := strconv.ParseUint(id, 10, 32)
-
-	if err != nil {
-		return
-	}
-
 	uintGroupId, err := strconv.ParseUint(groupId, 10, 32)
 	if err != nil {
 		return
@@ -36,8 +27,7 @@ func FindUser(c *gin.Context) {
 	userRepo := repository.NewUserRepository(database.Connection)
 
 	userService := service.NewUserService()
-	response, statusCode, err := userService.FindUser(uint(uintId), uint(uintGroupId), userRepo)
+	response, statusCode, err := userService.GetUsers(uint(uintGroupId), userRepo)
 
 	c.JSON(statusCode, response)
-
 }

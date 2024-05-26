@@ -8,8 +8,8 @@ import (
 
 type UserService interface {
 	CreateUser(body dto.CreateUserDto, userRepo repository.UserRepository) (gin.H, error)
-	GetUsers()
-	FindUser(userId, groupId uint, userRepo repository.UserRepository) (gin.H, error)
+	GetUsers(groupId uint, userRepo repository.UserRepository) (gin.H, int, error)
+	FindUser(userId, groupId uint, userRepo repository.UserRepository) (gin.H, int, error)
 	UpdateUser()
 	DeleteUser()
 }
