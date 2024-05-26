@@ -12,8 +12,6 @@ func CreateUser(c *gin.Context) {
 
 	userDto := dto.NewUserDto()
 
-	database.Connection.AutoMigrate()
-
 	body, err := userDto.CreateUser(c)
 	if err != nil {
 		return

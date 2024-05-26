@@ -8,6 +8,7 @@ import (
 type UserRepository interface {
 	CreateUser(name, email, password string, isAdmin bool, groupId uint) (models.User, error)
 	FindUser(userId uint) (models.User, error)
+	FindUserByEmail(email string) (models.User, error)
 }
 
 type userRepository struct {
