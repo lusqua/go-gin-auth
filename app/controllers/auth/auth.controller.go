@@ -7,4 +7,5 @@ func SetLoginController(r *gin.Engine) {
 	authGroup := r.Group("/auth")
 
 	authGroup.POST("/login", Login)
+	authGroup.POST("/refresh/:jti", Refresh)
 }

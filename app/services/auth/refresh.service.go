@@ -1,36 +1,42 @@
 package auth
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	jwtConfig "github.com/lusqua/gin-auth/app/config/jwt"
 	repository "github.com/lusqua/gin-auth/app/repositories/users"
 	"github.com/lusqua/gin-auth/app/usecases"
-	"golang.org/x/crypto/bcrypt"
 )
 
-func (a *authService) Login(email, password string, userRepo repository.UserRepository) (gin.H, error) {
+func (a *authService) Refresh(jti string, userRepo repository.UserRepository) (gin.H, error) {
 
-	findUser, err := userRepo.FindUserByEmail(email)
-	bytePass := []byte(findUser.Password)
+	userId := ActiveSessions[jti]
+
+	fmt.Println("USER ID: ", userId)
+
+	if userId == 0 {
+		fmt.Println("SESSION NOT FOUND")
+		return gin.H{
+			"message": "invalid token",
+		}, nil
+	}
+
+	findUser, err := userRepo.FindUserById(userId)
 
 	if err != nil {
+		fmt.Println("USER NOT FOUND")
 		return gin.H{
-			"message": "credentials invalid",
+			"message": "invalid token",
 		}, err
 	}
 
-	err = bcrypt.CompareHashAndPassword(bytePass, []byte(password))
+	// delete old session
+	delete(ActiveSessions, jti)
 
-	if err != nil {
-		return gin.H{
-			"message": "credentials invalid",
-		}, err
-	}
+	newJti := usecases.GenerateRandomString(32)
+	ActiveSessions[newJti] = findUser.ID
 
-	jti := usecases.GenerateRandomString(32)
-	ActiveSessions[jti] = findUser.ID
-
-	claims := usecases.CreateClaim(findUser.ID, findUser.GroupID, jti, []string{"user"})
+	claims := usecases.CreateClaim(findUser.ID, findUser.GroupID, newJti, []string{"user"})
 
 	accessTokenString, err := jwtConfig.SignClaim(claims["access_token"])
 
@@ -46,6 +52,7 @@ func (a *authService) Login(email, password string, userRepo repository.UserRepo
 		return gin.H{
 			"message": "error signing refresh token",
 		}, err
+
 	}
 
 	return gin.H{

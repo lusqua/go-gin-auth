@@ -5,8 +5,11 @@ import (
 	repository "github.com/lusqua/gin-auth/app/repositories/users"
 )
 
+var ActiveSessions = make(map[string]uint)
+
 type AuthService interface {
 	Login(email, password string, userRepo repository.UserRepository) (gin.H, error)
+	Refresh(token string, userRepo repository.UserRepository) (gin.H, error)
 }
 
 type authService struct {

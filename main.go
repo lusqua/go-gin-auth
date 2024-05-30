@@ -1,11 +1,14 @@
 package main
 
 import (
+	"github.com/MicahParks/jwkset"
+	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/lusqua/gin-auth/app/config/environment"
+	jwtConfig "github.com/lusqua/gin-auth/app/config/jwt"
 	"github.com/lusqua/gin-auth/app/controllers/auth"
 	"github.com/lusqua/gin-auth/app/models"
+	"log"
 
-	"fmt"
 	"github.com/lusqua/gin-auth/app/config/database"
 	"github.com/lusqua/gin-auth/app/controllers/users"
 	"net/http"
@@ -17,6 +20,7 @@ func main() {
 
 	database.DbConfig.Connect()
 	models.MigrateModels()
+	jwtConfig.JWKSetup()
 
 	r := gin.Default()
 	r.Use(gin.Logger())
@@ -25,57 +29,36 @@ func main() {
 	users.SetUserController(r)
 	auth.SetLoginController(r)
 
-	//r.POST(
-	//	"/auth", func(c *gin.Context) {
-	//		c.JSON(
-	//			http.StatusOK, gin.H{
-	//				"access_token": gin.H{
-	//					"aud":   "http://api.example.com",
-	//					"iss":   "https://krakend.io",
-	//					"sub":   "1234567890qwertyuio",
-	//					"jti":   "mnb23vcsrt756yuiomnbvcx98ertyuiop",
-	//					"roles": []string{"users", "admin"},
-	//					"exp":   1735689600,
-	//				},
-	//				"refresh_token": gin.H{
-	//					"aud": "http://api.example.com",
-	//					"iss": "https://krakend.io",
-	//					"sub": "1234567890qwertyuio",
-	//					"jti": "mnb23vcsrt756yuiomn12876bvcx98ertyuiop",
-	//					"exp": 1735689600,
-	//				},
-	//				"exp": 1735689600,
-	//			},
-	//		)
-	//	},
-	//)
-
 	r.GET(
-		"/protected/:id", func(c *gin.Context) {
-			id := c.Param("id")
-			headers := c.Request.Header
+		"/jwk", func(c *gin.Context) {
+			rawJWKS, err := jwtConfig.ServerStore.JSONPublic(c)
+			if err != nil {
+				log.Fatalf("Failed to get the server's JWKS.\nError: %s", err)
+			}
 
-			fmt.Println("ID:", id)
-			fmt.Println("Headers:", headers)
-
-			c.JSON(http.StatusOK, gin.H{"id": id})
+			c.JSON(http.StatusOK, rawJWKS)
 		},
 	)
 
-	r.GET(
-		"/jwk", func(c *gin.Context) {
-			c.JSON(
-				http.StatusOK, gin.H{
-					"keys": []gin.H{
-						{
-							"kty": "oct",
-							"k":   "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow",
-							"kid": "sim2",
-							"alg": "HS256",
-						},
-					},
-				},
-			)
+	r.POST(
+		"/login", func(c *gin.Context) {
+			token := jwt.New(jwt.SigningMethodRS256)
+			token.Header[jwkset.HeaderKID] = jwtConfig.KeyID
+
+			claims := token.Claims.(jwt.MapClaims)
+			claims["aud"] = "http://api.example.com"
+			claims["iss"] = "https://krakend.io"
+			claims["sub"] = "1234567890qwertyuio"
+			claims["jti"] = "mnb23vcsrt756yuiomnbvcx98ertyuiop"
+			claims["roles"] = []string{"users", "admin"}
+			claims["exp"] = 1735689600
+
+			signed, err := token.SignedString(jwtConfig.PrivateKey)
+			if err != nil {
+				log.Fatalf("Failed to sign a JWT.\nError: %s", err)
+			}
+
+			c.JSON(http.StatusOK, gin.H{"token": signed})
 		},
 	)
 

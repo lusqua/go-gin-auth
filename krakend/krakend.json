@@ -15,20 +15,30 @@
     {
       "endpoint": "/login",
       "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/auth/login",
+          "method": "POST",
+          "host": ["http://localhost:9000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/refresh",
+      "method": "POST",
+      "output_encoding": "no-op",
       "extra_config": {
-        "auth/signer": {
-          "alg": "HS256",
-          "kid": "sim2",
-          "keys_to_sign": ["access_token", "refresh_token"],
-          "cache": false,
+        "auth/validator": {
+          "alg": "RS256",
           "jwk_url": "http://localhost:9000/jwk",
+          "operation_debug": true,
           "disable_jwk_security": true,
-          "operation_debug": true
+          "cache": false
         }
       },
       "backend": [
         {
-          "url_pattern": "/auth/login",
+          "url_pattern": "/auth/refresh/{JWT.jti}",
           "method": "POST",
           "host": ["http://localhost:9000"]
         }
@@ -39,7 +49,7 @@
       "method": "GET",
       "extra_config": {
         "auth/validator": {
-          "alg": "HS256",
+          "alg": "RS256",
           "jwk_url": "http://localhost:9000/jwk",
           "operation_debug": true,
           "disable_jwk_security": true,
@@ -59,7 +69,7 @@
       "method": "GET",
       "extra_config": {
         "auth/validator": {
-          "alg": "HS256",
+          "alg": "RS256",
           "jwk_url": "http://localhost:9000/jwk",
           "operation_debug": true,
           "disable_jwk_security": true,
@@ -89,7 +99,7 @@
       ],
       "extra_config": {
         "auth/validator": {
-          "alg": "HS256",
+          "alg": "RS256",
           "jwk_url": "http://localhost:9000/jwk",
           "operation_debug": true,
           "disable_jwk_security": true,
