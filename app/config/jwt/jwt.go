@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
 	"github.com/MicahParks/jwkset"
 	"github.com/golang-jwt/jwt/v5"
 	"log"
@@ -70,4 +71,22 @@ func SignClaim(claim jwt.Claims) (string, error) {
 	}
 
 	return signed, nil
+}
+
+func GetClaim(token string) (jwt.MapClaims, error) {
+	t, err := jwt.Parse(
+		token, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+
+			return PublicKey, nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return t.Claims.(jwt.MapClaims), nil
 }

@@ -28,7 +28,7 @@ func (a *authService) Login(email, password string, userRepo repository.UserRepo
 	}
 
 	jti := usecases.GenerateRandomString(32)
-	ActiveSessions[jti] = findUser.ID
+	ActiveSessions[findUser.ID] = jti
 
 	claims := usecases.CreateClaim(findUser.ID, findUser.GroupID, jti, []string{"user"})
 

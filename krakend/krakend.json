@@ -25,6 +25,9 @@
     },
     {
       "endpoint": "/refresh",
+      "input_headers": [
+        "Authorization"
+      ],
       "method": "POST",
       "output_encoding": "no-op",
       "extra_config": {
@@ -38,7 +41,7 @@
       },
       "backend": [
         {
-          "url_pattern": "/auth/refresh/{JWT.jti}",
+          "url_pattern": "/auth/refresh",
           "method": "POST",
           "host": ["http://localhost:9000"]
         }

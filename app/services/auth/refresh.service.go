@@ -8,20 +8,32 @@ import (
 	"github.com/lusqua/gin-auth/app/usecases"
 )
 
-func (a *authService) Refresh(jti string, userRepo repository.UserRepository) (gin.H, error) {
+func (a *authService) Refresh(token string, userRepo repository.UserRepository) (gin.H, error) {
 
-	userId := ActiveSessions[jti]
+	claim, err := jwtConfig.GetClaim(token)
 
-	fmt.Println("USER ID: ", userId)
-
-	if userId == 0 {
-		fmt.Println("SESSION NOT FOUND")
+	if err != nil {
 		return gin.H{
 			"message": "invalid token",
 		}, nil
 	}
 
-	findUser, err := userRepo.FindUserById(userId)
+	userId := claim["userId"].(float64)
+	jti := claim["jti"].(string)
+
+	uintUserId := uint(userId)
+
+	activeSession := ActiveSessions[uintUserId]
+
+	if activeSession != jti {
+		fmt.Println("SESSION NOT FOUND")
+		return gin.H{
+			"message": "invalid token",
+		}, nil
+
+	}
+
+	findUser, err := userRepo.FindUserById(uintUserId)
 
 	if err != nil {
 		fmt.Println("USER NOT FOUND")
@@ -31,10 +43,10 @@ func (a *authService) Refresh(jti string, userRepo repository.UserRepository) (g
 	}
 
 	// delete old session
-	delete(ActiveSessions, jti)
+	delete(ActiveSessions, uintUserId)
 
 	newJti := usecases.GenerateRandomString(32)
-	ActiveSessions[newJti] = findUser.ID
+	ActiveSessions[uintUserId] = newJti
 
 	claims := usecases.CreateClaim(findUser.ID, findUser.GroupID, newJti, []string{"user"})
 

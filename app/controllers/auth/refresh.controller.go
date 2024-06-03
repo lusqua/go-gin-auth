@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/lusqua/gin-auth/app/config/database"
-	dto "github.com/lusqua/gin-auth/app/dtos/auth"
+	dtos "github.com/lusqua/gin-auth/app/dtos/auth"
 	repository "github.com/lusqua/gin-auth/app/repositories/users"
 	service "github.com/lusqua/gin-auth/app/services/auth"
 )
 
 func Refresh(c *gin.Context) {
 
-	authDto := dto.NewAuthDto()
-
-	refresh, err := authDto.Refresh(c)
+	authDto := dtos.NewAuthDto()
+	token, err := authDto.Refresh(c)
 
 	if err != nil {
 		return
@@ -22,7 +21,7 @@ func Refresh(c *gin.Context) {
 	authService := service.NewAuthService()
 	userRepo := repository.NewUserRepository(database.Connection)
 
-	response, err := authService.Refresh(refresh.JTI, userRepo)
+	response, err := authService.Refresh(token, userRepo)
 
 	if err != nil {
 		fmt.Println(err)
@@ -30,8 +29,5 @@ func Refresh(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("RESPONSE: ", response)
-
 	c.JSON(200, response)
-
 }
